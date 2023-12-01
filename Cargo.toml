@@ -1,0 +1,13 @@
+[package]
+name = "phalanx"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["staticlib", "cdylib", "lib"]
+
+[dependencies]
+aya = "0.11.0"
+aya-obj = { git = "https://github.com/aya-rs/aya.git" }
+anyhow = { version = "1.0", default-features = false }
+libbpf-rs = "0.21"
