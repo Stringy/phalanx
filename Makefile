@@ -31,3 +31,12 @@ debug: builder
 		-w $(PWD) \
 		-v /sys:/sys \
 		phalanx-builder
+
+.PHONY: bpf
+bpf:
+	mkdir cmake-build
+	@docker run --rm -it \
+		-v $(PWD):$(PWD) \
+		-w $(PWD) \
+		phalanx-builder \
+		cmake -B cmake-build bpf/

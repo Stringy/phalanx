@@ -8,7 +8,7 @@ find_program(
   DOC "Path to the clang executable")
 
 if(NOT CLANG_EXE)
-  message(FATAL_ERROR "Failed to find clang executable")
+  message(FATAL_ERROR "[bpf] Failed to find clang executable")
 endif()
 
 find_program(
@@ -17,14 +17,14 @@ find_program(
   DOC "Path to the bpftool executable")
 
 if(NOT BPFTOOL_EXE)
-  message(FATAL_ERROR "Failed to find bpftool executable")
+  message(FATAL_ERROR "[bpf] Failed to find bpftool executable")
 endif()
 
 # Get clang bpf system includes
 execute_process(
   COMMAND
     bash -c
-    "${MODERN_CLANG_EXE} -v -E - < /dev/null 2>&1 |
+    "${CLANG_EXE} -v -E - < /dev/null 2>&1 |
           sed -n '/<...> search starts here:/,/End of search list./{ s| \\(/.*\\)|-idirafter \\1|p }'"
   OUTPUT_VARIABLE CLANG_SYSTEM_INCLUDES_output
   ERROR_VARIABLE CLANG_SYSTEM_INCLUDES_error
@@ -32,14 +32,11 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE)
 if(${CLANG_SYSTEM_INCLUDES_result} EQUAL 0)
   string(REPLACE "\n" " " CLANG_SYSTEM_INCLUDES ${CLANG_SYSTEM_INCLUDES_output})
-  message(
-    STATUS
-      "${MODERN_BPF_LOG_PREFIX} BPF system include flags: ${CLANG_SYSTEM_INCLUDES}"
-  )
+  message(STATUS "[bpf] BPF system include flags: ${CLANG_SYSTEM_INCLUDES}")
 else()
   message(
     FATAL_ERROR
-      "${MODERN_BPF_LOG_PREFIX} Failed to determine BPF system includes: ${CLANG_SYSTEM_INCLUDES_error}"
+      "[bpf] Failed to determine BPF system includes: ${CLANG_SYSTEM_INCLUDES_error}"
   )
 endif()
 
@@ -57,12 +54,10 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE)
 if(${ARCH_result} EQUAL 0)
   set(ARCH ${ARCH_output})
-  message(STATUS "${MODERN_BPF_LOG_PREFIX} Target arch: ${ARCH}")
+  message(STATUS "[bpf] Target arch: ${ARCH}")
 else()
   message(
-    FATAL_ERROR
-      "${MODERN_BPF_LOG_PREFIX} Failed to determine target architecture: ${ARCH_error}"
-  )
+    FATAL_ERROR "[bpf] Failed to determine target architecture: ${ARCH_error}")
 endif()
 
 # Set includes and compilation flags
