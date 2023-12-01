@@ -69,19 +69,20 @@ list(
   CLANG_FLAGS
   -g
   -O2
-  -target=bpf
+  --target=bpf
   -D__${DEBUG}__
   -D__TARGET_ARCH_${ARCH} # Match libbpf usage in `/libbpf/src/bpf_tracing.h`
   -D__USE_VMLINUX__ # Used to compile without kernel headers.
   -I${CMAKE_CURRENT_SOURCE_DIR}/libbpf/include
+  -I${CMAKE_CURRENT_SOURCE_DIR}/libbpf/src
   -I${CMAKE_CURRENT_SOURCE_DIR}/include
   -isystem)
 
 # Search all bpf includes files. (we can use bpf.h files)
-file(GLOB_RECURSE BPF_H_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
+file(GLOB_RECURSE BPF_H_FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h)
 
 # Search all bpf.c files
-file(GLOB_RECURSE BPF_C_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.bpf.c)
+file(GLOB_RECURSE BPF_C_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.bpf.c)
 
 foreach(c_file ${BPF_C_FILES})
   get_filename_component(file_stem ${c_file} NAME_WE)

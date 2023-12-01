@@ -34,9 +34,15 @@ debug: builder
 
 .PHONY: bpf
 bpf:
-	mkdir cmake-build
+	mkdir -p cmake-build
 	@docker run --rm -it \
-		-v $(PWD):$(PWD) \
+		-v /usr/src:/usr/src \
+		-v $(PWD):$(PWD):rw \
 		-w $(PWD) \
+		-u 1000:1000 \
 		phalanx-builder \
-		cmake -B cmake-build bpf/
+		./scripts/build-bpf.sh
+
+.PHONY: clean
+clean:
+	rm -rf cmake-build
