@@ -1,18 +1,11 @@
 
 RUST_VERSION ?= 1.73
 
-.PHONY: builder
-builder: Dockerfile
-	@docker build -t phalanx-builder -f Dockerfile .
+BUILD_TYPE ?= debug
 
 .PHONY: build
-build: builder
-	@docker run --rm -it \
-		-v $(PWD):$(PWD) \
-		-w $(PWD) \
-		phalanx-builder \
-		"cargo build --examples"
-
+build: Dockerfile $(shell find src -type f -name '*.rs')
+	@docker build -t phalanx -f Dockerfile --build-arg BUILD_TYPE=$(BUILD_TYPE) .
 
 .PHONY: run-falco
 run-falco: build
@@ -41,7 +34,7 @@ bpf:
 		-w $(PWD) \
 		-u 1000:1000 \
 		phalanx-builder \
-		./scripts/build-bpf.sh
+		./scripts/build-bpf.s
 
 .PHONY: clean
 clean:

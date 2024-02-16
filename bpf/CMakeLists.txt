@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.16)
 
 project(phalanx-bpf)
 
+include(ExternalProject)
+
 find_program(
   CLANG_EXE
   NAMES clang
@@ -20,6 +22,33 @@ if(NOT BPFTOOL_EXE)
   message(FATAL_ERROR "[bpf] Failed to find bpftool executable")
 endif()
 
+set(LIBBPF_SRC "${PROJECT_BINARY_DIR}/libbpf-prefix/src")
+set(LIBBPF_BUILD_DIR "${LIBBPF_SRC}/libbpf-build")
+set(LIBBPF_INCLUDE "${LIBBPF_BUILD_DIR}/root/usr/include")
+set(LIBBPF_LIB "${LIBBPF_BUILD_DIR}/root/usr/lib64/libbpf.a")
+
+ExternalProject_Add(
+  libbpf
+  PREFIX "${PROJECT_BINARY_DIR}/libbpf"
+  SOURCE_DIR "libbpf"
+  CONFIGURE_COMMAND mkdir -p build root
+  BUILD_COMMAND
+    ${CMAKE_MAKE_PROGRAM} BUILD_STATIC_ONLY=y OBJDIR=${LIBBPF_BUILD_DIR}/build
+    DESTDIR=${LIBBPF_BUILD_DIR}/root NO_PKG_CONFIG=1 "EXTRA_CFLAGS=-fPIC"
+    "LDFLAGS=-Wl,-Bstatic" -C ${CMAKE_CURRENT_SOURCE_DIR}/libbpf/src install
+    install_uapi_headers
+  INSTALL_COMMAND ""
+  UPDATE_COMMAND "")
+
+install(
+  FILES "${LIBBPF_LIB}"
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/"
+  COMPONENT "libs-deps")
+install(
+  DIRECTORY "${LIBBPF_INCLUDE}"
+  DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/"
+  COMPONENT "libs-deps")
+
 # Get clang bpf system includes
 execute_process(
   COMMAND
@@ -30,6 +59,7 @@ execute_process(
   ERROR_VARIABLE CLANG_SYSTEM_INCLUDES_error
   RESULT_VARIABLE CLANG_SYSTEM_INCLUDES_result
   OUTPUT_STRIP_TRAILING_WHITESPACE)
+
 if(${CLANG_SYSTEM_INCLUDES_result} EQUAL 0)
   string(REPLACE "\n" " " CLANG_SYSTEM_INCLUDES ${CLANG_SYSTEM_INCLUDES_output})
   message(STATUS "[bpf] BPF system include flags: ${CLANG_SYSTEM_INCLUDES}")
@@ -73,8 +103,7 @@ list(
   -D__${DEBUG}__
   -D__TARGET_ARCH_${ARCH} # Match libbpf usage in `/libbpf/src/bpf_tracing.h`
   -D__USE_VMLINUX__ # Used to compile without kernel headers.
-  -I${CMAKE_CURRENT_SOURCE_DIR}/libbpf/include
-  -I${CMAKE_CURRENT_SOURCE_DIR}/libbpf/src
+  -I${LIBBPF_INCLUDE}
   -I${CMAKE_CURRENT_SOURCE_DIR}/include
   -isystem)
 
